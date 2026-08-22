@@ -17,7 +17,15 @@ func GetDisplayName(m *discordgo.Member) string {
 }
 
 func ExtractUser(users []*discordgo.Member, extract *discordgo.Member) []*discordgo.Member {
-	return nil
+	var filteredUsers []*discordgo.Member
+
+	for _, user := range users {
+		if user.User.ID != extract.User.ID {
+			filteredUsers = append(filteredUsers, user)
+		}
+	}
+
+	return filteredUsers
 }
 
 func GetDisplayNamesAppend(users []*discordgo.Member) []string {

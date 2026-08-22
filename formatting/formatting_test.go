@@ -182,8 +182,20 @@ func TestGetDisplayNames(t *testing.T) {
 					},
 					Nick: "",
 				},
+				{
+					User: &discordgo.User{
+						Username: "Username",
+						Discriminator: "",
+						GlobalName: "",
+					},
+					Nick: "",
+				},
 			},
-			[]string{"Username"},
+			[]string{"Username", "Username"},
+		},
+		{
+			[]*discordgo.Member{},
+			[]string{},
 		},
 		{
 			[]*discordgo.Member{
@@ -195,60 +207,16 @@ func TestGetDisplayNames(t *testing.T) {
 					},
 					Nick: "",
 				},
-			},
-			[]string{"Username"},
-		},
-		{
-			[]*discordgo.Member{
 				{
 					User: &discordgo.User{
 						Username: "Username",
 						Discriminator: "",
-						GlobalName: "",
+						GlobalName: "GlobalName",
 					},
 					Nick: "",
 				},
 			},
-			[]string{"Username"},
-		},
-		{
-			[]*discordgo.Member{
-				{
-					User: &discordgo.User{
-						Username: "Username",
-						Discriminator: "",
-						GlobalName: "",
-					},
-					Nick: "",
-				},
-			},
-			[]string{"Username"},
-		},
-		{
-			[]*discordgo.Member{
-				{
-					User: &discordgo.User{
-						Username: "Username",
-						Discriminator: "",
-						GlobalName: "",
-					},
-					Nick: "",
-				},
-			},
-			[]string{"Username"},
-		},
-		{
-			[]*discordgo.Member{
-				{
-					User: &discordgo.User{
-						Username: "Username",
-						Discriminator: "",
-						GlobalName: "",
-					},
-					Nick: "",
-				},
-			},
-			[]string{"Username"},
+			[]string{"Username", "GlobalName"},
 		},
 	}
 
