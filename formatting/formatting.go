@@ -69,3 +69,17 @@ func GetStringList(strings []string) string {
 
 	return out
 }
+
+func LinesToString(lines []string) string {
+	var out string
+
+	for i, line := range lines {
+		out += line
+
+		if i < len(lines) - 1 {
+			out += "\n"
+		}
+	}
+
+	return out
+}

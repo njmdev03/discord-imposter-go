@@ -7,6 +7,7 @@ import (
 	"os/signal"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/njmdev03/discord-imposter-go/bot"
 )
 
 // Bot parameters
@@ -16,7 +17,10 @@ var (
 	RemoveCommands = flag.Bool("rmcmd", true, "Remove all commands after shutdowning or not")
 )
 
-var s *discordgo.Session
+var (
+	b *bot.Bot
+	s *discordgo.Session
+)
 
 func init() { flag.Parse() }
 
@@ -28,10 +32,21 @@ func init() {
 	}
 }
 
+func init() {
+	b = bot.NewBot(s, bot.NewInteractionManager())
+
+	
+}
+
 func main() {
 	s.AddHandler(func(s *discordgo.Session, r *discordgo.Ready) {
 		log.Printf("Logged in as: %v#%v", s.State.User.Username, s.State.User.Discriminator)
 	})
+
+	s.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+
+	})
+
 	err := s.Open()
 	if err != nil {
 		log.Fatalf("Cannot open the session: %v", err)

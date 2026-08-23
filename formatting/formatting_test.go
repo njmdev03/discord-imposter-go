@@ -233,3 +233,45 @@ func TestGetDisplayNames(t *testing.T) {
 		})
 	}
 }
+
+func TestLineToString(t *testing.T) {
+	tests := []struct {
+		lines []string
+		want string
+	}{
+		{
+			[]string{},
+			"",
+		},
+		{
+			[]string{
+				"Line1",
+			},
+			"Line1",
+		},
+		{
+			[]string{
+				"Line 1",
+			},
+			"Line 1",
+		},
+		{
+			[]string{
+				"Line 1",
+				"Line 2",
+			},
+			"Line 1\nLine 2",
+		},
+	}
+
+	for _, test := range tests {
+		testname := fmt.Sprintf("%v", test.lines)
+
+		t.Run(testname, func(t *testing.T) {
+			result := LinesToString(test.lines)
+			if result != test.want {
+				t.Errorf("got %s, want %s", result, test.want)
+			}
+		})
+	}
+}
