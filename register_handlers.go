@@ -9,24 +9,24 @@ import (
 var (
 	commandHandlers = []bot.Command{
 		{
-			ApplicationCommand: discordgo.ApplicationCommand{
+			ApplicationCommand: &discordgo.ApplicationCommand{
 				Name: "help",
 				Description: "Show a help message",
 			},
 			Callback: commands.HandleHelp,
 		},
 		{
-			ApplicationCommand: discordgo.ApplicationCommand{
+			ApplicationCommand: &discordgo.ApplicationCommand{
 				Name: "invite",
 				Description: "Add the bot to another server",
 			},
 			Callback: commands.HandleInvite,
 		},
 		{
-			ApplicationCommand: discordgo.ApplicationCommand{
+			ApplicationCommand: &discordgo.ApplicationCommand{
 				Name: "roll",
 				Description: "Randomly select imposters from a voice channel",
-				Options: &[]discordgo.ApplicationCommandOption{
+				Options: []*discordgo.ApplicationCommandOption{
 					{
 						Type: discordgo.ApplicationCommandOptionInteger,
 						Name: "imposters",
@@ -43,7 +43,7 @@ var (
 			Callback: commands.HandleRoll,
 		},
 		{
-			ApplicationCommand: discordgo.ApplicationCommand{
+			ApplicationCommand: &discordgo.ApplicationCommand{
 				Name: "summary",
 				Description: "Post the rolls from the last game",
 			},
@@ -54,7 +54,7 @@ var (
 
 var (
 	helpRollComponentHandler = bot.Component{
-		
+
 	}
 	helpSummaryComponentHandler = bot.Component{
 

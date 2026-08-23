@@ -8,14 +8,28 @@ import (
 
 type InteractionCallback func(*Bot, *discordgo.InteractionCreate) error
 
+type data struct {
+	x int
+	y int
+}
+
+type inter interface {
+	data
+}
+
+func test(i *inter) {
+	
+}
+
 type InteractionHandler interface {
+	data
 	GetType() discordgo.InteractionType
 	GetID() string
 	GetCallback() InteractionCallback
 }
 
 type Command struct {
-	ApplicationCommand *discordgo.ApplicationCommand
+	ApplicationCommand discordgo.ApplicationCommand
 	Callback InteractionCallback
 }
 
@@ -32,12 +46,19 @@ func (m *Command) GetCallback() InteractionCallback {
 }
 
 type Component struct {
-	MessageComponent *discordgo.MessageComponent
+	MessageComponent discordgo.MessageComponent
 	Callback InteractionCallback
 }
 
 func (m *Component) GetID() string {
-	return m.MessageComponent.CustomID
+	switch t := m.MessageComponent.(type) {
+	case *discordgo.Button:
+		return t.CustomID
+	case *discordgo.SelectMenu:
+		return t.CustomID
+	}
+
+	return ""
 }
 
 func (m *Component) GetType() discordgo.InteractionType {
@@ -50,7 +71,7 @@ func (m *Component) GetCallback() InteractionCallback {
 
 type Modal struct {
 	CustomID string
-	MessageComponent *discordgo.MessageComponent
+	MessageComponent discordgo.MessageComponent
 	Callback InteractionCallback
 }
 
@@ -69,12 +90,6 @@ func (m *Modal) GetCallback() InteractionCallback {
 func (m *Modal) GetInteractionResponseData() *discordgo.InteractionResponseData {
 	return nil
 }
-
-// type InteractionHandler struct {
-// 	Type discordgo.InteractionType
-// 	Name string
-// 	Callback InteractionCallback
-// }
 
 type InteractionManager struct {
 	handlers map[discordgo.InteractionType] map[string] InteractionHandler
