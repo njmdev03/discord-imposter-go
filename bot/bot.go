@@ -10,12 +10,59 @@ type Bot struct {
 	Session *discordgo.Session
 
 	InteractionManager *InteractionManager
+	CommandManager *CommandManager
+}
+
+func (b *Bot) AddCommand(c *Command) error {
+	e := b.CommandManager.AddCommand(c)
+
+	if e != nil {
+		return e
+	}
+
+	e = b.InteractionManager.AddCommand(c)
+
+	if e != nil {
+		return e
+	}
+
+	return nil
+}
+
+func (b *Bot) AddButton(c *Button) error {
+	e := b.InteractionManager.AddButton(c)
+
+	if e != nil {
+		return e
+	}
+
+	return nil
+}
+
+func (b *Bot) AddSelectMenu(c *SelectMenu) error {
+	e := b.InteractionManager.AddSelectMenu(c)
+
+	if e != nil {
+		return e
+	}
+
+	return nil
+}
+
+func (b *Bot) AddModal(m *Modal) error {
+	e := b.InteractionManager.AddModal(m)
+
+	if e != nil {
+		return e
+	}
+
+	return nil
 }
 
 func (b *Bot) HandleInteraction(i *discordgo.InteractionCreate) error {
 	var name string
 
-	switch i.Type {
+	switch i.Interaction.Type {
 	case discordgo.InteractionModalSubmit:
 		name = i.ModalSubmitData().CustomID
 	case discordgo.InteractionMessageComponent:
@@ -30,7 +77,7 @@ func (b *Bot) HandleInteraction(i *discordgo.InteractionCreate) error {
 
 	callback, e := b.InteractionManager.GetCallback(i.Type, name)
 
-	if e != nil {
+	if e != nil || callback == nil {
 		return fmt.Errorf("Error handling interaction %w", e)
 	}
 
@@ -43,9 +90,12 @@ func (b *Bot) HandleInteraction(i *discordgo.InteractionCreate) error {
 	return nil
 }
 
-func NewBot(s *discordgo.Session, im *InteractionManager) *Bot {
-	return &Bot{
+func NewBot(s *discordgo.Session) (*Bot, error) {
+	b := &Bot{
 		Session: s,
-		InteractionManager: im,
+		InteractionManager: NewInteractionManager(),
+		CommandManager: NewCommandManager(),
 	}
+
+	return b, nil
 }
