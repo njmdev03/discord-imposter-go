@@ -1,9 +1,13 @@
 package interactions
 
 import (
+	"fmt"
+
 	"github.com/bwmarrin/discordgo"
 	"github.com/njmdev03/discord-imposter-go/bot"
+	discordhelpers "github.com/njmdev03/discord-imposter-go/discord-helpers"
 	"github.com/njmdev03/discord-imposter-go/formatting"
+	"github.com/njmdev03/discord-imposter-go/game"
 )
 
 var (
@@ -111,9 +115,153 @@ func HandleInvite(b *bot.Bot, i *discordgo.InteractionCreate) error {
 }
 
 func HandleRoll(b *bot.Bot, i *discordgo.InteractionCreate) error {
+	if i.Interaction.Context != discordgo.InteractionContextGuild {
+		return b.Session.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Flags: discordgo.MessageFlagsEphemeral,
+				Content: "This command can only be used in a server.",
+			},
+		})
+	}
+
+	e := StartGame(b, i)
+
+	if e != nil {
+		err := b.Session.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Flags: discordgo.MessageFlagsEphemeral,
+				Content: "There was a problem starting your game.",
+			},
+		})
+
+		if err != nil {
+			return fmt.Errorf("Problem sending interacation response: '%w' after Problem starting game: '%w'", err, e)
+		}
+
+		return fmt.Errorf("Problem starting game: %w", e)
+	}
+
+	return b.Session.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Flags: discordgo.MessageFlagsEphemeral,
+			Content: "Roles sent, GLHF",
+		},
+	})
+}
+
+func StartGame(b *bot.Bot, i *discordgo.InteractionCreate) error {
+	existing_game, err := b.ContextManager.CheckGame(i.Interaction.GuildID, i.Interaction.Member.User.ID, b.Session)
+
+	if err == bot.ErrGameNotFound {
+		// Good
+	} else if err != nil {
+		return fmt.Errorf("Problem checking for game: %w", err)
+	} else if existing_game != nil {
+		err := b.ContextManager.RemoveGame(i.Interaction.GuildID, i.Interaction.Member.User.ID)
+
+		if err != nil {
+			return fmt.Errorf("Problem removing existing game: %w", err)
+		}
+	}
+
+	// Find the invoking user's voice state.
+	userVoiceState, err := b.Session.State.VoiceState(i.Interaction.GuildID, i.Interaction.Member.User.ID)
+
+	if err != nil || userVoiceState == nil || userVoiceState.ChannelID == "" {
+		// User isn't in a voice channel.
+		return b.Session.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Flags: discordgo.MessageFlagsEphemeral,
+				Content: "You are not in a voice channel.",
+			},
+		})
+	}
+
+	// Find everyone in the same voice channel.
+	vs, err := discordhelpers.GetUsersInVoice(b.Session, i.Interaction.GuildID, userVoiceState.ChannelID)
+
+	if err != nil {
+		return fmt.Errorf("Problem getting voice channel users: %w", err)
+	}
+
+	members, err := discordhelpers.VoiceStatesToMembers(b.Session, vs)
+
+	// Create Game
+	g, err := game.CreateGame(members, int(discordhelpers.GetIntOption(i.Interaction, "imposters", 1)))
+
+	if err != nil {
+		return fmt.Errorf("Problem creating game: %w", err)
+	}
+
+	// Save game
+	err = b.ContextManager.AddGame(g, i.Interaction.GuildID, i.Interaction.Member.User.ID)
+
+	if err != nil {
+		return fmt.Errorf("Problem saving game: %w", err)
+	}
+
+	// message players
+	g.MessagePlayers(b.Session, discordhelpers.GetBoolOption(i.Interaction, "include_allies", false))
+
 	return nil
 }
 
 func HandleSummary(b *bot.Bot, i *discordgo.InteractionCreate) error {
-	return nil
+	if i.Interaction.Context != discordgo.InteractionContextGuild {
+		return b.Session.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Flags: discordgo.MessageFlagsEphemeral,
+				Content: "This command can only be used in a server.",
+			},
+		})
+	}
+
+	g, e := GetExistingGame(b, i)
+
+	if e != nil {
+		err := b.Session.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Flags: discordgo.MessageFlagsEphemeral,
+				Content: "There was a problem getting your game summary",
+			},
+		})
+
+		if err != nil {
+			return fmt.Errorf("Problem sending interaction response: '%w' after Problem getting summary: '%w'", err, e)
+		}
+
+		return fmt.Errorf("Problem getting summary: %w", e)
+	}
+
+	return b.Session.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Flags: discordgo.MessageFlagsEphemeral,
+			Content: g.ToString(),
+		},
+	})
+}
+
+func GetExistingGame(b *bot.Bot, i *discordgo.InteractionCreate) (*game.Game, error) {
+	existing_game, err := b.ContextManager.CheckGame(i.Interaction.GuildID, i.Interaction.Member.User.ID, b.Session)
+
+	if err == bot.ErrGameNotFound {
+		return nil, b.Session.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Flags: discordgo.MessageFlagsEphemeral,
+				Content: "It looks like you haven't started a game in this server yet. Try using /roll",
+			},
+		})
+	} else if err != nil {
+		return nil, fmt.Errorf("Problem checking for game: %w", err)
+	}
+
+	return existing_game, nil
 }

@@ -60,7 +60,7 @@ func init() {
 func init() {
 	var e error
 
-	b, e = bot.NewBot(s)
+	b, e = bot.NewBot(s, bot.NewMemoryContextManager())
 
 	if e != nil {
 		log.Fatalf("Problem creating bot: %v", e)

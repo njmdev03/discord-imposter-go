@@ -11,6 +11,7 @@ type Bot struct {
 
 	InteractionManager *InteractionManager
 	CommandManager *CommandManager
+	ContextManager ContextManager
 }
 
 func (b *Bot) AddCommand(c *Command) error {
@@ -90,11 +91,12 @@ func (b *Bot) HandleInteraction(i *discordgo.InteractionCreate) error {
 	return nil
 }
 
-func NewBot(s *discordgo.Session) (*Bot, error) {
+func NewBot(s *discordgo.Session, c ContextManager) (*Bot, error) {
 	b := &Bot{
 		Session: s,
 		InteractionManager: NewInteractionManager(),
 		CommandManager: NewCommandManager(),
+		ContextManager: c,
 	}
 
 	return b, nil

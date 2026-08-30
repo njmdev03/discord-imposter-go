@@ -29,6 +29,9 @@ var (
 				Type: discordgo.ChatApplicationCommand,
 				Name:        "roll",
 				Description: "Randomly select imposters from a voice channel",
+				Contexts: &[]discordgo.InteractionContextType{
+					discordgo.InteractionContextGuild,
+				},
 				Options: []*discordgo.ApplicationCommandOption{
 					{
 						Type:        discordgo.ApplicationCommandOptionInteger,
@@ -50,6 +53,9 @@ var (
 				Type: discordgo.ChatApplicationCommand,
 				Name:        "summary",
 				Description: "Post the rolls from the last game",
+				Contexts: &[]discordgo.InteractionContextType{
+					discordgo.InteractionContextGuild,
+				},
 			},
 			Handler: HandleSummary,
 		},
